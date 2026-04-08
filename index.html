@@ -159,6 +159,42 @@
       });
       const [includeBothEnds, setIncludeBothEnds] = useState(true);
 
+      // --- 期間計算用の和暦入力状態管理 ---
+      const [targetDateInputType, setTargetDateInputType] = useState('seireki');
+      const [targetWarekiInput, setTargetWarekiInput] = useState(() => {
+        return getWarekiParts(new Date(targetDateInput));
+      });
+
+      useEffect(() => {
+        const d = new Date(targetDateInput);
+        if (!isNaN(d.getTime())) {
+          setTargetWarekiInput(getWarekiParts(d));
+        }
+      }, [targetDateInput]);
+
+      const handleTargetWarekiInput = (field, value) => {
+        const newWareki = { ...targetWarekiInput, [field]: value };
+        setTargetWarekiInput(newWareki);
+        
+        const y = parseInt(newWareki.year, 10);
+        const m = parseInt(newWareki.month, 10);
+        const d = parseInt(newWareki.day, 10);
+        
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+          const baseYear = { '令和': 2018, '平成': 1988, '昭和': 1925, '大正': 1911, '明治': 1867 }[newWareki.era] || 2018;
+          const seirekiYear = baseYear + y;
+          const newDate = new Date(seirekiYear, m - 1, d);
+          
+          if (!isNaN(newDate.getTime())) {
+             const yy = newDate.getFullYear();
+             const mm = String(newDate.getMonth() + 1).padStart(2, '0');
+             const dd = String(newDate.getDate()).padStart(2, '0');
+             setTargetDateInput(`${yy}-${mm}-${dd}`);
+          }
+        }
+      };
+
+
       // --- 計算ロジック ---
       const baseDate = new Date(baseDateStr);
       const isValidBaseDate = !isNaN(baseDate.getTime()) && baseDateStr !== '';
@@ -228,8 +264,6 @@
       let targetDateBetween = null;
       let daysDifference = null;
       let daysDirection = '';
-      let businessDays = 0;
-      let weekendDays = 0;
 
       if (isValidBaseDate && targetDateInput !== '') {
         targetDateBetween = new Date(targetDateInput);
@@ -247,22 +281,6 @@
           else daysDirection = '当日';
 
           daysDifference = includeBothEnds ? rawDiff + 1 : rawDiff;
-          
-          // 営業日・土日の計算
-          let countStart = new Date(Math.min(start.getTime(), end.getTime()));
-          let currentCountDate = new Date(countStart);
-          let daysToCount = daysDifference;
-          
-          while (daysToCount > 0) {
-            const day = currentCountDate.getDay();
-            if (day === 0 || day === 6) {
-              weekendDays++;
-            } else {
-              businessDays++;
-            }
-            currentCountDate.setDate(currentCountDate.getDate() + 1);
-            daysToCount--;
-          }
         }
       }
 
@@ -437,14 +455,56 @@
 
               {/* 期間の詳細計算カード (全幅を使うため col-span-2) */}
               <div className="lg:col-span-2">
-                <Card title="期間の詳細計算（日数・営業日など）" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                <Card title="期間の詳細計算（日数など）" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
                   <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
                     {/* 左側：入力と結果サマリー */}
                     <div className="flex-1 flex flex-col">
-                      <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                        基準日と
-                        <input type="date" value={targetDateInput} onChange={(e) => setTargetDateInput(e.target.value)} className="text-lg sm:text-2xl font-black text-blue-600 border-b-2 border-slate-300 focus:border-blue-500 focus:ring-0 outline-none pb-1 mx-2 bg-transparent cursor-pointer transition-colors rounded-none" />
-                        の間
+                      <div className="flex flex-col mb-4">
+                        <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 text-slate-700 font-medium leading-loose sm:leading-relaxed mb-2">
+                          基準日と
+                          <div className="flex items-center gap-2 mx-2">
+                            <div className="flex bg-slate-100 rounded-lg p-1">
+                              <button onClick={() => setTargetDateInputType('seireki')} className={`px-2 py-0.5 text-xs sm:text-sm font-bold rounded-md transition-colors ${targetDateInputType === 'seireki' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                西暦
+                              </button>
+                              <button onClick={() => setTargetDateInputType('wareki')} className={`px-2 py-0.5 text-xs sm:text-sm font-bold rounded-md transition-colors ${targetDateInputType === 'wareki' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                和暦
+                              </button>
+                            </div>
+                          </div>
+                          の間
+                        </div>
+                        <div className="min-h-[3rem] flex items-center">
+                          {targetDateInputType === 'seireki' ? (
+                            <input type="date" value={targetDateInput} onChange={(e) => setTargetDateInput(e.target.value)} className="text-lg sm:text-2xl font-black text-blue-600 border-b-2 border-slate-300 focus:border-blue-500 focus:ring-0 outline-none pb-1 bg-transparent cursor-pointer transition-colors rounded-none w-full sm:w-auto ml-2" />
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-3 sm:gap-2 text-lg sm:text-2xl font-black text-slate-800 py-1 ml-2">
+                              <select 
+                                value={targetWarekiInput.era} 
+                                onChange={(e) => handleTargetWarekiInput('era', e.target.value)} 
+                                className="bg-white border border-slate-300 rounded-md px-2 py-1.5 focus:border-blue-500 outline-none cursor-pointer transition-colors font-bold text-slate-800 text-base sm:text-lg shadow-sm"
+                              >
+                                <option value="令和">令和</option>
+                                <option value="平成">平成</option>
+                                <option value="昭和">昭和</option>
+                                <option value="大正">大正</option>
+                                <option value="明治">明治</option>
+                              </select>
+                              <div className="flex items-center">
+                                <NumberInputWithButtons isSmall={true} width="w-10 sm:w-12" min={1} value={targetWarekiInput.year} onChange={(e) => handleTargetWarekiInput('year', e.target.value)} />
+                                <span className="text-base sm:text-xl whitespace-nowrap ml-1">年</span>
+                              </div>
+                              <div className="flex items-center">
+                                <NumberInputWithButtons isSmall={true} width="w-8 sm:w-10" min={1} max={12} value={targetWarekiInput.month} onChange={(e) => handleTargetWarekiInput('month', e.target.value)} />
+                                <span className="text-base sm:text-xl whitespace-nowrap ml-1">月</span>
+                              </div>
+                              <div className="flex items-center">
+                                <NumberInputWithButtons isSmall={true} width="w-8 sm:w-10" min={1} max={31} value={targetWarekiInput.day} onChange={(e) => handleTargetWarekiInput('day', e.target.value)} />
+                                <span className="text-base sm:text-xl whitespace-nowrap ml-1">日</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
                       <label className="flex items-center gap-2 mb-6 cursor-pointer text-sm sm:text-base text-slate-600 hover:text-slate-800 transition-colors w-fit bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
@@ -480,45 +540,23 @@
 
                     {/* 右側：詳細パネル */}
                     {daysDifference !== null && daysDifference > 0 && (
-                      <div className="flex-1 flex flex-col gap-4">
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center flex flex-col justify-center shadow-sm">
-                            <div className="text-xs sm:text-sm text-blue-700 font-bold mb-1">営業日 (土日除く)</div>
-                            <div className="text-3xl sm:text-4xl font-black text-blue-600">{businessDays}</div>
-                          </div>
+                      <div className="flex-1 flex flex-col gap-4 justify-end">
+                        <div className="grid grid-cols-3 gap-3 sm:gap-4">
                           <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
                             <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">週</div>
-                            <div className="text-3xl sm:text-4xl font-black text-slate-700">{Math.floor(daysDifference / 7)}</div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 7)}</div>
                           </div>
                           <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
                             <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">月 (概算)</div>
-                            <div className="text-3xl sm:text-4xl font-black text-slate-700">{Math.floor(daysDifference / 30)}</div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 30)}</div>
                           </div>
                           <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
                             <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">年 (概算)</div>
-                            <div className="text-3xl sm:text-4xl font-black text-slate-700">{Math.floor(daysDifference / 365)}</div>
+                            <div className="text-2xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 365)}</div>
                           </div>
                         </div>
 
-                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base">
-                           <h4 className="font-bold text-blue-800 mb-3 flex items-center">
-                             <span className="w-1 h-4 bg-blue-500 rounded-full mr-2"></span>日数の内訳
-                           </h4>
-                           <div className="flex justify-between py-2 border-b border-blue-100/60">
-                             <span className="text-slate-600 font-medium">全日数</span>
-                             <span className="font-black text-slate-800">{daysDifference} 日</span>
-                           </div>
-                           <div className="flex justify-between py-2 border-b border-blue-100/60">
-                             <span className="text-slate-600 font-medium">営業日 (平日)</span>
-                             <span className="font-black text-blue-600">{businessDays} 日</span>
-                           </div>
-                           <div className="flex justify-between py-2">
-                             <span className="text-slate-600 font-medium">土日</span>
-                             <span className="font-black text-red-500">{weekendDays} 日</span>
-                           </div>
-                        </div>
-
-                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base">
+                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base mt-2">
                            <h4 className="font-bold text-blue-800 mb-3 flex items-center">
                              <span className="w-1 h-4 bg-blue-500 rounded-full mr-2"></span>時間単位の換算 (参考)
                            </h4>
