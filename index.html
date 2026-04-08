@@ -57,6 +57,50 @@
       }
     };
 
+    // --- 新規追加: +/- ボタン付きの数値入力コンポーネント ---
+    const NumberInputWithButtons = ({ value, onChange, min, max, width = "w-16 sm:w-20", placeholder, isSmall = false }) => {
+      const handleDecrement = () => {
+        let val = value === '' ? (min !== undefined ? min : 0) : parseInt(value, 10);
+        if (min !== undefined && val <= min) return;
+        onChange({ target: { value: val - 1 } });
+      };
+      
+      const handleIncrement = () => {
+        let val = value === '' ? (min !== undefined ? min : 0) : parseInt(value, 10);
+        if (max !== undefined && val >= max) return;
+        onChange({ target: { value: val + 1 } });
+      };
+
+      const containerClass = isSmall 
+        ? "inline-flex items-center bg-white rounded-md border border-slate-300 focus-within:border-blue-500 overflow-hidden shadow-sm mx-1"
+        : "inline-flex items-center mx-1 sm:mx-2 bg-white rounded-lg border-2 border-slate-200 focus-within:border-blue-400 overflow-hidden shadow-sm transition-colors";
+      
+      const btnClass = isSmall
+        ? "px-2 py-0.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-colors font-black text-lg select-none active:bg-slate-200"
+        : "px-3 py-1 text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-colors font-black text-xl select-none active:bg-slate-200";
+        
+      const inputClassName = isSmall
+        ? `${width} p-0.5 text-center outline-none font-bold text-lg sm:text-xl text-slate-800 bg-transparent rounded-none`
+        : `${width} p-1 text-center outline-none font-bold text-xl sm:text-2xl text-blue-600 bg-transparent rounded-none`;
+
+      return (
+        <div className={containerClass}>
+          <button type="button" onClick={handleDecrement} className={btnClass} aria-label="減らす">−</button>
+          <input 
+            type="number" 
+            inputMode="numeric"
+            min={min}
+            max={max}
+            className={inputClassName}
+            value={value} 
+            onChange={onChange} 
+            placeholder={placeholder}
+          />
+          <button type="button" onClick={handleIncrement} className={btnClass} aria-label="増やす">＋</button>
+        </div>
+      );
+    };
+
     function App() {
       // --- 状態管理 ---
       const [baseDateStr, setBaseDateStr] = useState(() => {
@@ -174,7 +218,6 @@
       }
 
       // --- UIコンポーネント ---
-      const inputClass = "w-16 sm:w-20 mx-1 sm:mx-2 p-1 text-center border-b-2 border-slate-300 focus:border-blue-500 outline-none font-bold text-xl sm:text-2xl text-blue-600 bg-transparent transition-colors rounded-none";
       const selectClass = "mx-1 sm:mx-2 p-1 bg-transparent border-b-2 border-slate-300 focus:border-blue-500 outline-none font-bold text-xl sm:text-2xl text-blue-600 cursor-pointer transition-colors";
 
       const Card = ({ title, icon, children }) => (
@@ -258,32 +301,36 @@
                     {baseDateInputType === 'seireki' ? (
                       <input type="date" value={baseDateStr} onChange={(e) => setBaseDateStr(e.target.value)} className="text-xl sm:text-3xl font-black text-slate-800 border-b-2 border-slate-300 focus:border-blue-500 focus:ring-0 outline-none pb-1 bg-transparent w-full sm:w-auto cursor-pointer transition-colors rounded-none" />
                     ) : (
-                      <div className="flex flex-wrap items-end gap-x-2 gap-y-3 sm:gap-2 text-lg sm:text-2xl font-black text-slate-800 w-full">
-                        <select value={warekiInput.era} onChange={(e) => handleWarekiInput('era', e.target.value)} className="border-b-2 border-slate-300 focus:border-blue-500 outline-none pb-1 bg-transparent cursor-pointer transition-colors">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-3 sm:gap-2 text-lg sm:text-2xl font-black text-slate-800 w-full py-1">
+                        <select 
+                          value={warekiInput.era} 
+                          onChange={(e) => handleWarekiInput('era', e.target.value)} 
+                          className="bg-white border border-slate-300 rounded-md px-2 py-1.5 focus:border-blue-500 outline-none cursor-pointer transition-colors font-bold text-slate-800 text-base sm:text-lg shadow-sm"
+                        >
                           <option value="令和">令和</option>
                           <option value="平成">平成</option>
                           <option value="昭和">昭和</option>
                           <option value="大正">大正</option>
                           <option value="明治">明治</option>
                         </select>
-                        <div className="flex items-end">
-                          <input type="number" inputMode="numeric" min="1" value={warekiInput.year} onChange={(e) => handleWarekiInput('year', e.target.value)} className="w-12 sm:w-16 text-center border-b-2 border-slate-300 focus:border-blue-500 outline-none pb-1 bg-transparent transition-colors rounded-none" />
-                          <span className="text-base sm:text-xl pb-1 whitespace-nowrap">年</span>
+                        <div className="flex items-center">
+                          <NumberInputWithButtons isSmall={true} width="w-10 sm:w-12" min={1} value={warekiInput.year} onChange={(e) => handleWarekiInput('year', e.target.value)} />
+                          <span className="text-base sm:text-xl whitespace-nowrap ml-1">年</span>
                         </div>
-                        <div className="flex items-end">
-                          <input type="number" inputMode="numeric" min="1" max="12" value={warekiInput.month} onChange={(e) => handleWarekiInput('month', e.target.value)} className="w-10 sm:w-14 text-center border-b-2 border-slate-300 focus:border-blue-500 outline-none pb-1 bg-transparent transition-colors rounded-none" />
-                          <span className="text-base sm:text-xl pb-1 whitespace-nowrap">月</span>
+                        <div className="flex items-center">
+                          <NumberInputWithButtons isSmall={true} width="w-8 sm:w-10" min={1} max={12} value={warekiInput.month} onChange={(e) => handleWarekiInput('month', e.target.value)} />
+                          <span className="text-base sm:text-xl whitespace-nowrap ml-1">月</span>
                         </div>
-                        <div className="flex items-end">
-                          <input type="number" inputMode="numeric" min="1" max="31" value={warekiInput.day} onChange={(e) => handleWarekiInput('day', e.target.value)} className="w-10 sm:w-14 text-center border-b-2 border-slate-300 focus:border-blue-500 outline-none pb-1 bg-transparent transition-colors rounded-none" />
-                          <span className="text-base sm:text-xl pb-1 whitespace-nowrap">日</span>
+                        <div className="flex items-center">
+                          <NumberInputWithButtons isSmall={true} width="w-8 sm:w-10" min={1} max={31} value={warekiInput.day} onChange={(e) => handleWarekiInput('day', e.target.value)} />
+                          <span className="text-base sm:text-xl whitespace-nowrap ml-1">日</span>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
                 
-                <div className="flex-1 w-full lg:max-w-md bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 flex flex-col justify-center relative overflow-hidden">
+                <div className="flex-1 w-full lg:max-w-md bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 flex flex-col justify-center relative overflow-hidden mt-2 lg:mt-0">
                   <div className="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
                   <div className="text-xs font-bold text-slate-400 mb-1 sm:mb-2 uppercase tracking-wider ml-2">現在の基準日</div>
                   <div className="text-xl sm:text-3xl font-black text-slate-800 mb-1 ml-2">
@@ -298,9 +345,9 @@
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               <Card title="〇年前・〇年後は何年？" icon={<ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-2 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
                   基準日から
-                  <input type="number" inputMode="numeric" className={inputClass} value={diffYears} onChange={handleNumberChange(setDiffYears)} placeholder="0" />
+                  <NumberInputWithButtons value={diffYears} onChange={handleNumberChange(setDiffYears)} placeholder="0" />
                   <select className={selectClass} value={diffYearsType} onChange={e => setDiffYearsType(e.target.value)}>
                     <option value="before">年前</option>
                     <option value="after">年後</option>
@@ -311,17 +358,17 @@
               </Card>
 
               <Card title="〇歳になるのは何年？" icon={<User className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-2 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
                   基準日を生年月日として、
-                  <input type="number" inputMode="numeric" className={inputClass} value={targetAge} onChange={handleNumberChange(setTargetAge)} placeholder="0" />
+                  <NumberInputWithButtons value={targetAge} onChange={handleNumberChange(setTargetAge)} placeholder="0" />
                   歳になる年は
                 </div>
                 <ResultBox main={targetAgeResultDate ? getSeireki(targetAgeResultDate) : null} sub1={targetAgeResultDate ? getWareki(targetAgeResultDate) : null} />
               </Card>
 
               <Card title="指定した年の情報を知る" icon={<HistoryIcon className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-2 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  <input type="number" inputMode="numeric" className={inputClass} style={{ width: '5.5rem' }} value={targetYear} onChange={handleNumberChange(setTargetYear)} placeholder="2030" />
+                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                  <NumberInputWithButtons width="w-20 sm:w-24" value={targetYear} onChange={handleNumberChange(setTargetYear)} placeholder="2030" />
                   年は、基準日から見て
                 </div>
                 <ResultBox 
@@ -332,9 +379,9 @@
               </Card>
 
               <Card title="〇日前・〇日後は何月何日？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-2 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
                   基準日から
-                  <input type="number" inputMode="numeric" className={inputClass} style={{ width: '5.5rem' }} value={diffDays} onChange={handleNumberChange(setDiffDays)} placeholder="0" />
+                  <NumberInputWithButtons width="w-20 sm:w-24" value={diffDays} onChange={handleNumberChange(setDiffDays)} placeholder="0" />
                   <select className={selectClass} value={diffDaysType} onChange={e => setDiffDaysType(e.target.value)}>
                     <option value="before">日前</option>
                     <option value="after">日後</option>
