@@ -151,13 +151,13 @@
       const [targetAge, setTargetAge] = useState(50);
       const [targetYear, setTargetYear] = useState(() => new Date().getFullYear() + 10);
       
-      // 新しい状態: 期間計算用のターゲット日（デフォルトは100日後に設定）
       const [targetDateInput, setTargetDateInput] = useState(() => {
         const today = new Date();
         const jstOffset = 9 * 60 * 60 * 1000;
         const jstDate = new Date(today.getTime() + (today.getTimezoneOffset() * 60000) + jstOffset + (100 * 24 * 60 * 60 * 1000));
         return jstDate.toISOString().split('T')[0];
       });
+      const [includeBothEnds, setIncludeBothEnds] = useState(true);
 
       // --- 計算ロジック ---
       const baseDate = new Date(baseDateStr);
@@ -177,10 +177,15 @@
         }
       };
 
-      const getSeireki = (date, includeDay = false) => {
+      const getSeireki = (date, includeDay = false, includeDayOfWeek = false) => {
         if (!date || isNaN(date.getTime())) return '';
         if (includeDay) {
-          return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+          let str = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+          if (includeDayOfWeek) {
+            const weeks = ['日', '月', '火', '水', '木', '金', '土'];
+            str += ` (${weeks[date.getDay()]})`;
+          }
+          return str;
         }
         return `${date.getFullYear()}年`;
       };
@@ -219,22 +224,45 @@
         targetYearDate.setFullYear(targetYear);
       }
 
-      // 4. 指定した日付までの日数計算
+      // 4. 指定した日付までの詳細日数計算
       let targetDateBetween = null;
       let daysDifference = null;
       let daysDirection = '';
+      let businessDays = 0;
+      let weekendDays = 0;
+
       if (isValidBaseDate && targetDateInput !== '') {
         targetDateBetween = new Date(targetDateInput);
         if (!isNaN(targetDateBetween.getTime())) {
-          // 時間のズレを無視して純粋な日付の差を計算するため、UTCで午前0時に揃える
-          const baseUTC = Date.UTC(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
-          const targetUTC = Date.UTC(targetDateBetween.getFullYear(), targetDateBetween.getMonth(), targetDateBetween.getDate());
-          const diffTime = targetUTC - baseUTC;
+          const start = new Date(baseDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(targetDateBetween);
+          end.setHours(0, 0, 0, 0);
           
-          daysDifference = Math.abs(diffTime) / (1000 * 60 * 60 * 24);
+          const diffTime = end.getTime() - start.getTime();
+          let rawDiff = Math.round(Math.abs(diffTime) / (1000 * 60 * 60 * 24));
+          
           if (diffTime > 0) daysDirection = '後';
           else if (diffTime < 0) daysDirection = '前';
           else daysDirection = '当日';
+
+          daysDifference = includeBothEnds ? rawDiff + 1 : rawDiff;
+          
+          // 営業日・土日の計算
+          let countStart = new Date(Math.min(start.getTime(), end.getTime()));
+          let currentCountDate = new Date(countStart);
+          let daysToCount = daysDifference;
+          
+          while (daysToCount > 0) {
+            const day = currentCountDate.getDay();
+            if (day === 0 || day === 6) {
+              weekendDays++;
+            } else {
+              businessDays++;
+            }
+            currentCountDate.setDate(currentCountDate.getDate() + 1);
+            daysToCount--;
+          }
         }
       }
 
@@ -372,7 +400,7 @@
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               <Card title="〇年前・〇年後は何年？" icon={<ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6"/>}>
                 <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
                   基準日から
@@ -407,20 +435,113 @@
                 />
               </Card>
 
-              <Card title="指定した日付までは何日間？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  基準日と
-                  <input type="date" value={targetDateInput} onChange={(e) => setTargetDateInput(e.target.value)} className="text-lg sm:text-2xl font-black text-blue-600 border-b-2 border-slate-300 focus:border-blue-500 focus:ring-0 outline-none pb-1 mx-2 bg-transparent cursor-pointer transition-colors rounded-none" />
-                  の間は
-                </div>
-                <ResultBox 
-                  main={daysDifference !== null ? (daysDirection === '当日' ? '0日間 (同日)' : `${daysDifference} 日間`) : null} 
-                  sub1={daysDifference !== null && daysDirection !== '当日' ? `(基準日の ${daysDifference}日${daysDirection})` : null}
-                  sub2={targetDateBetween && !isNaN(targetDateBetween.getTime()) ? `${getWareki(targetDateBetween, true)}` : null}
-                />
-              </Card>
-            </div>
+              {/* 期間の詳細計算カード (全幅を使うため col-span-2) */}
+              <div className="lg:col-span-2">
+                <Card title="期間の詳細計算（日数・営業日など）" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                  <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
+                    {/* 左側：入力と結果サマリー */}
+                    <div className="flex-1 flex flex-col">
+                      <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                        基準日と
+                        <input type="date" value={targetDateInput} onChange={(e) => setTargetDateInput(e.target.value)} className="text-lg sm:text-2xl font-black text-blue-600 border-b-2 border-slate-300 focus:border-blue-500 focus:ring-0 outline-none pb-1 mx-2 bg-transparent cursor-pointer transition-colors rounded-none" />
+                        の間
+                      </div>
+                      
+                      <label className="flex items-center gap-2 mb-6 cursor-pointer text-sm sm:text-base text-slate-600 hover:text-slate-800 transition-colors w-fit bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+                        <input 
+                          type="checkbox" 
+                          checked={includeBothEnds} 
+                          onChange={(e) => setIncludeBothEnds(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                        />
+                        <span className="font-medium">計算オプション: 開始日と終了日を両方含む (+1日)</span>
+                      </label>
 
+                      <div className="mt-auto h-full flex flex-col justify-end">
+                        {daysDifference !== null ? (
+                          <div className="bg-white rounded-xl p-6 border-2 border-yellow-400 shadow-sm text-center relative overflow-hidden">
+                             <div className="text-slate-500 text-sm sm:text-base font-bold mb-3">
+                               {getSeireki(baseDate, true, true)} 〜 {targetDateBetween && getSeireki(targetDateBetween, true, true)}
+                             </div>
+                             <div className="text-5xl sm:text-6xl font-black text-slate-800 tracking-tight leading-tight mb-3">
+                               {daysDifference} <span className="text-2xl sm:text-3xl font-bold ml-1">日間</span>
+                             </div>
+                             <div className="text-xs sm:text-sm text-slate-400 font-medium">
+                               {includeBothEnds ? "(開始日を含む、終了日を含む)" : "(開始日は含まず、終了日を含む)"}
+                             </div>
+                          </div>
+                        ) : (
+                          <div className="bg-slate-100 rounded-xl p-6 border border-slate-200 text-center text-sm sm:text-base text-slate-500 font-medium h-full flex items-center justify-center">
+                            数値を入力してください
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 右側：詳細パネル */}
+                    {daysDifference !== null && daysDifference > 0 && (
+                      <div className="flex-1 flex flex-col gap-4">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 text-center flex flex-col justify-center shadow-sm">
+                            <div className="text-xs sm:text-sm text-blue-700 font-bold mb-1">営業日 (土日除く)</div>
+                            <div className="text-3xl sm:text-4xl font-black text-blue-600">{businessDays}</div>
+                          </div>
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
+                            <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">週</div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-700">{Math.floor(daysDifference / 7)}</div>
+                          </div>
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
+                            <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">月 (概算)</div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-700">{Math.floor(daysDifference / 30)}</div>
+                          </div>
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
+                            <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">年 (概算)</div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-700">{Math.floor(daysDifference / 365)}</div>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base">
+                           <h4 className="font-bold text-blue-800 mb-3 flex items-center">
+                             <span className="w-1 h-4 bg-blue-500 rounded-full mr-2"></span>日数の内訳
+                           </h4>
+                           <div className="flex justify-between py-2 border-b border-blue-100/60">
+                             <span className="text-slate-600 font-medium">全日数</span>
+                             <span className="font-black text-slate-800">{daysDifference} 日</span>
+                           </div>
+                           <div className="flex justify-between py-2 border-b border-blue-100/60">
+                             <span className="text-slate-600 font-medium">営業日 (平日)</span>
+                             <span className="font-black text-blue-600">{businessDays} 日</span>
+                           </div>
+                           <div className="flex justify-between py-2">
+                             <span className="text-slate-600 font-medium">土日</span>
+                             <span className="font-black text-red-500">{weekendDays} 日</span>
+                           </div>
+                        </div>
+
+                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base">
+                           <h4 className="font-bold text-blue-800 mb-3 flex items-center">
+                             <span className="w-1 h-4 bg-blue-500 rounded-full mr-2"></span>時間単位の換算 (参考)
+                           </h4>
+                           <div className="flex justify-between py-2 border-b border-blue-100/60">
+                             <span className="text-slate-600 font-medium">時間</span>
+                             <span className="font-black text-slate-800">{(daysDifference * 24).toLocaleString()} 時間</span>
+                           </div>
+                           <div className="flex justify-between py-2 border-b border-blue-100/60">
+                             <span className="text-slate-600 font-medium">分</span>
+                             <span className="font-black text-slate-800">{(daysDifference * 24 * 60).toLocaleString()} 分</span>
+                           </div>
+                           <div className="flex justify-between py-2">
+                             <span className="text-slate-600 font-medium">秒</span>
+                             <span className="font-black text-slate-800">{(daysDifference * 24 * 60 * 60).toLocaleString()} 秒</span>
+                           </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+
+            </div>
           </div>
         </div>
       );
