@@ -38,6 +38,18 @@
     const CalendarDays = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>;
     const HistoryIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>;
     const Calculator = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>;
+    
+    // 追加のアイコン
+    const RefreshCcw = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>;
+    const FileTextIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>;
+    const GiftIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>;
+    const XIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>;
+
+    // 干支を取得する関数
+    const getEto = (year) => {
+      const etoList = ['申', '酉', '戌', '亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未'];
+      return etoList[year % 12];
+    };
 
     // 和暦の各パーツをDateオブジェクトから取得するヘルパー関数
     const getWarekiParts = (date) => {
@@ -57,7 +69,38 @@
       }
     };
 
-    // --- 新規追加: +/- ボタン付きの数値入力コンポーネント ---
+    // 正確な年月日差を取得する関数
+    const getExactDiff = (start, end) => {
+      let isNegative = false;
+      let s = new Date(start);
+      let e = new Date(end);
+      s.setHours(0,0,0,0);
+      e.setHours(0,0,0,0);
+
+      if (s > e) {
+        isNegative = true;
+        const temp = s;
+        s = e;
+        e = temp;
+      }
+      
+      let years = e.getFullYear() - s.getFullYear();
+      let months = e.getMonth() - s.getMonth();
+      let days = e.getDate() - s.getDate();
+
+      if (days < 0) {
+        months -= 1;
+        const prevMonth = new Date(e.getFullYear(), e.getMonth(), 0);
+        days += prevMonth.getDate();
+      }
+      if (months < 0) {
+        years -= 1;
+        months += 12;
+      }
+      return { years, months, days, isNegative };
+    };
+
+    // --- +/- ボタン付きの数値入力コンポーネント ---
     const NumberInputWithButtons = ({ value, onChange, min, max, width = "w-16 sm:w-20", placeholder, isSmall = false }) => {
       const handleDecrement = () => {
         let val = value === '' ? (min !== undefined ? min : 0) : parseInt(value, 10);
@@ -103,19 +146,17 @@
 
     function App() {
       // --- 状態管理 ---
-      const [baseDateStr, setBaseDateStr] = useState(() => {
+      const getTodayString = () => {
         const today = new Date();
         const jstOffset = 9 * 60 * 60 * 1000;
         const jstDate = new Date(today.getTime() + (today.getTimezoneOffset() * 60000) + jstOffset);
         return jstDate.toISOString().split('T')[0];
-      });
+      };
 
+      const [baseDateStr, setBaseDateStr] = useState(() => getTodayString());
       const [baseDateInputType, setBaseDateInputType] = useState('seireki');
 
-      const [warekiInput, setWarekiInput] = useState(() => {
-        const initialDate = new Date(baseDateStr);
-        return getWarekiParts(initialDate);
-      });
+      const [warekiInput, setWarekiInput] = useState(() => getWarekiParts(new Date(baseDateStr)));
 
       useEffect(() => {
         const d = new Date(baseDateStr);
@@ -123,6 +164,10 @@
           setWarekiInput(getWarekiParts(d));
         }
       }, [baseDateStr]);
+
+      const resetToToday = () => {
+        setBaseDateStr(getTodayString());
+      };
 
       const handleWarekiInput = (field, value) => {
         const newWareki = { ...warekiInput, [field]: value };
@@ -146,24 +191,27 @@
         }
       };
 
+      // 各ツールの入力状態
       const [diffYears, setDiffYears] = useState(10);
       const [diffYearsType, setDiffYearsType] = useState('after');
       const [targetAge, setTargetAge] = useState(50);
       const [targetYear, setTargetYear] = useState(() => new Date().getFullYear() + 10);
+      const [diffDaysTool, setDiffDaysTool] = useState(100);
+      const [diffDaysToolType, setDiffDaysToolType] = useState('after');
       
       const [targetDateInput, setTargetDateInput] = useState(() => {
-        const today = new Date();
-        const jstOffset = 9 * 60 * 60 * 1000;
-        const jstDate = new Date(today.getTime() + (today.getTimezoneOffset() * 60000) + jstOffset + (100 * 24 * 60 * 60 * 1000));
-        return jstDate.toISOString().split('T')[0];
+        const d = new Date(getTodayString());
+        d.setDate(d.getDate() + 100);
+        return d.toISOString().split('T')[0];
       });
       const [includeBothEnds, setIncludeBothEnds] = useState(true);
 
-      // --- 期間計算用の和暦入力状態管理 ---
       const [targetDateInputType, setTargetDateInputType] = useState('seireki');
-      const [targetWarekiInput, setTargetWarekiInput] = useState(() => {
-        return getWarekiParts(new Date(targetDateInput));
-      });
+      const [targetWarekiInput, setTargetWarekiInput] = useState(() => getWarekiParts(new Date(targetDateInput)));
+      
+      // モーダル状態
+      const [showResumeModal, setShowResumeModal] = useState(false);
+      const [showOiwaiModal, setShowOiwaiModal] = useState(false);
 
       useEffect(() => {
         const d = new Date(targetDateInput);
@@ -260,10 +308,19 @@
         targetYearDate.setFullYear(targetYear);
       }
 
-      // 4. 指定した日付までの詳細日数計算
+      // 4. 〇日前・〇日後の日付計算
+      let diffDaysToolResultDate = null;
+      if (isValidBaseDate && diffDaysTool !== '') {
+        diffDaysToolResultDate = new Date(baseDate);
+        const sign = diffDaysToolType === 'after' ? 1 : -1;
+        diffDaysToolResultDate.setDate(diffDaysToolResultDate.getDate() + (diffDaysTool * sign));
+      }
+
+      // 5. 指定した日付までの詳細日数計算
       let targetDateBetween = null;
       let daysDifference = null;
       let daysDirection = '';
+      let exactDiff = null;
 
       if (isValidBaseDate && targetDateInput !== '') {
         targetDateBetween = new Date(targetDateInput);
@@ -281,8 +338,65 @@
           else daysDirection = '当日';
 
           daysDifference = includeBothEnds ? rawDiff + 1 : rawDiff;
+          exactDiff = getExactDiff(start, end);
         }
       }
+
+      // 年表生成ロジック
+      const generateResumeTimeline = () => {
+        if (!isValidBaseDate) return [];
+        // 早生まれ判定: 1/1〜4/1生まれを早生まれとする
+        const isEarly = baseDate.getMonth() < 3 || (baseDate.getMonth() === 3 && baseDate.getDate() === 1);
+        const startY = isEarly ? baseDate.getFullYear() - 1 : baseDate.getFullYear();
+        
+        const createEntry = (yearAdd, month, label) => {
+          const d = new Date(startY + yearAdd, month - 1, 1);
+          return {
+            year: d.getFullYear(),
+            wareki: getWareki(d),
+            month,
+            label
+          };
+        };
+
+        return [
+          createEntry(7, 4, '小学校 入学'),
+          createEntry(13, 3, '小学校 卒業'),
+          createEntry(13, 4, '中学校 入学'),
+          createEntry(16, 3, '中学校 卒業'),
+          createEntry(16, 4, '高等学校 入学'),
+          createEntry(19, 3, '高等学校 卒業'),
+          createEntry(19, 4, '大学 入学'),
+          createEntry(23, 3, '大学 卒業'),
+        ];
+      };
+
+      const generateOiwaiTimeline = () => {
+        if (!isValidBaseDate) return [];
+        
+        const createEntry = (age, label, description) => {
+          const d = new Date(baseDate);
+          d.setFullYear(d.getFullYear() + age);
+          return {
+            age,
+            year: d.getFullYear(),
+            wareki: getWareki(d),
+            label,
+            description
+          };
+        };
+
+        return [
+          createEntry(60, '還暦 (かんれき)', '満60歳。十干十二支が一巡して元の暦に還ることから。'),
+          createEntry(70, '古希 (こき)', '満70歳。唐の詩人・杜甫の詩に由来。'),
+          createEntry(77, '喜寿 (きじゅ)', '満77歳。「喜」の草書体が七十七と読めることから。'),
+          createEntry(80, '傘寿 (さんじゅ)', '満80歳。「傘」の略字が八十と読めることから。'),
+          createEntry(88, '米寿 (べいじゅ)', '満88歳。「米」の字を分解すると八十八となることから。'),
+          createEntry(90, '卒寿 (そつじゅ)', '満90歳。「卒」の略字が九十と読めることから。'),
+          createEntry(99, '白寿 (はくじゅ)', '満99歳。「百」の字から一を取ると白になることから。'),
+          createEntry(100, '百寿 (ひゃくじゅ)', '満100歳のお祝い。紀寿（きじゅ）とも呼ばれます。')
+        ];
+      };
 
       // --- UIコンポーネント ---
       const selectClass = "mx-1 sm:mx-2 p-1 bg-transparent border-b-2 border-slate-300 focus:border-blue-500 outline-none font-bold text-xl sm:text-2xl text-blue-600 cursor-pointer transition-colors";
@@ -336,7 +450,7 @@
       };
 
       return (
-        <div className="min-h-screen bg-slate-100 p-3 sm:p-6 md:p-8 font-sans text-slate-800">
+        <div className="min-h-screen bg-slate-100 p-3 sm:p-6 md:p-8 font-sans text-slate-800 relative">
           <div className="max-w-5xl mx-auto">
             <header className="mb-6 sm:mb-8 pl-2 border-l-4 border-blue-500">
               <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2">
@@ -361,13 +475,18 @@
                       <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
                       Base Date Setting
                     </h2>
-                    <div className="flex bg-slate-100 rounded-lg p-1">
-                      <button onClick={() => setBaseDateInputType('seireki')} className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-bold rounded-md transition-colors ${baseDateInputType === 'seireki' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                        西暦
+                    <div className="flex items-center gap-2">
+                      <button onClick={resetToToday} className="flex items-center text-slate-500 hover:text-blue-600 font-bold bg-slate-100 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors text-xs sm:text-sm shadow-sm border border-slate-200">
+                        <RefreshCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5" /> 今日
                       </button>
-                      <button onClick={() => setBaseDateInputType('wareki')} className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-bold rounded-md transition-colors ${baseDateInputType === 'wareki' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                        和暦
-                      </button>
+                      <div className="flex bg-slate-100 rounded-lg p-1">
+                        <button onClick={() => setBaseDateInputType('seireki')} className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-bold rounded-md transition-colors ${baseDateInputType === 'seireki' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                          西暦
+                        </button>
+                        <button onClick={() => setBaseDateInputType('wareki')} className={`px-2 sm:px-3 py-1 text-xs sm:text-sm font-bold rounded-md transition-colors ${baseDateInputType === 'wareki' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                          和暦
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="text-base sm:text-lg font-bold text-slate-700 mb-3">基準となる日付を設定</div>
@@ -408,8 +527,15 @@
                 <div className="flex-1 w-full lg:max-w-md bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 flex flex-col justify-center relative overflow-hidden mt-2 lg:mt-0">
                   <div className="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
                   <div className="text-xs font-bold text-slate-400 mb-1 sm:mb-2 uppercase tracking-wider ml-2">現在の基準日</div>
-                  <div className="text-xl sm:text-3xl font-black text-slate-800 mb-1 ml-2">
-                    {isValidBaseDate ? getSeireki(baseDate, true) : '無効な日付です'}
+                  <div className="flex items-baseline mb-1 ml-2 flex-wrap">
+                    <span className="text-xl sm:text-3xl font-black text-slate-800 mr-2">
+                      {isValidBaseDate ? getSeireki(baseDate, true) : '無効な日付です'}
+                    </span>
+                    {isValidBaseDate && (
+                      <span className="text-base sm:text-xl text-slate-500 font-bold whitespace-nowrap">
+                        ({getEto(baseDate.getFullYear())}年)
+                      </span>
+                    )}
                   </div>
                   <div className="text-lg sm:text-2xl font-bold text-blue-600 ml-2">
                     {isValidBaseDate ? getWareki(baseDate, true) : '---'}
@@ -418,7 +544,7 @@
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8">
               <Card title="〇年前・〇年後は何年？" icon={<ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6"/>}>
                 <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
                   基準日から
@@ -429,7 +555,7 @@
                   </select>
                   は
                 </div>
-                <ResultBox main={diffYearsResultDate ? getSeireki(diffYearsResultDate) : null} sub1={diffYearsResultDate ? getWareki(diffYearsResultDate) : null} />
+                <ResultBox main={diffYearsResultDate ? getSeireki(diffYearsResultDate) : null} sub1={diffYearsResultDate ? getWareki(diffYearsResultDate) : null} sub2={diffYearsResultDate ? `干支: ${getEto(diffYearsResultDate.getFullYear())}年` : null} />
               </Card>
 
               <Card title="〇歳になるのは何年？" icon={<User className="w-5 h-5 sm:w-6 sm:h-6"/>}>
@@ -449,8 +575,21 @@
                 <ResultBox 
                   main={targetYear !== '' && targetYearDiff !== null ? (targetYearDiff > 0 ? `${targetYearDiff}年後` : targetYearDiff < 0 ? `${Math.abs(targetYearDiff)}年前` : '同年') : null}
                   sub1={targetYear !== '' && targetYearDate ? getWareki(targetYearDate) : null}
-                  sub2={targetYear !== '' && targetYearDiff !== null ? `基準日を0歳と: ${targetYearDiff >= 0 ? targetYearDiff + '歳' : '生まれる前'}` : null}
+                  sub2={targetYear !== '' && targetYearDiff !== null ? `干支: ${getEto(targetYear)}年 / 基準日から: ${targetYearDiff >= 0 ? targetYearDiff + '歳' : '生まれる前'}` : null}
                 />
+              </Card>
+
+              <Card title="〇日前・〇日後はいつ？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                  基準日から
+                  <NumberInputWithButtons width="w-20 sm:w-24" value={diffDaysTool} onChange={handleNumberChange(setDiffDaysTool)} placeholder="0" />
+                  <select className={selectClass} value={diffDaysToolType} onChange={e => setDiffDaysToolType(e.target.value)}>
+                    <option value="before">日前</option>
+                    <option value="after">日後</option>
+                  </select>
+                  は
+                </div>
+                <ResultBox main={diffDaysToolResultDate ? getSeireki(diffDaysToolResultDate, true, true) : null} sub1={diffDaysToolResultDate ? getWareki(diffDaysToolResultDate, true) : null} />
               </Card>
 
               {/* 期間の詳細計算カード (全幅を使うため col-span-2) */}
@@ -542,21 +681,30 @@
                     {daysDifference !== null && daysDifference > 0 && (
                       <div className="flex-1 flex flex-col gap-4 justify-end">
                         <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                          <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
-                            <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">週</div>
-                            <div className="text-2xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 7)}</div>
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-3 sm:p-4 text-center shadow-sm flex flex-col justify-center col-span-3">
+                            <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">暦通りの正確な期間</div>
+                            <div className="text-xl sm:text-3xl font-black text-slate-700 flex items-baseline justify-center flex-wrap">
+                              {exactDiff && exactDiff.years > 0 && <>{exactDiff.years}<span className="text-sm sm:text-lg font-bold ml-1 mr-2 text-slate-500">年</span></>}
+                              {exactDiff && exactDiff.months > 0 && <>{exactDiff.months}<span className="text-sm sm:text-lg font-bold ml-1 mr-2 text-slate-500">ヶ月</span></>}
+                              {exactDiff && (exactDiff.days > 0 || (exactDiff.years === 0 && exactDiff.months === 0)) && <>{exactDiff.days}<span className="text-sm sm:text-lg font-bold ml-1 text-slate-500">日</span></>}
+                            </div>
                           </div>
-                          <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
+                          
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-3 sm:p-4 text-center shadow-sm flex flex-col justify-center">
+                            <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">週 (概算)</div>
+                            <div className="text-xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 7)}</div>
+                          </div>
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-3 sm:p-4 text-center shadow-sm flex flex-col justify-center">
                             <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">月 (概算)</div>
-                            <div className="text-2xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 30)}</div>
+                            <div className="text-xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 30)}</div>
                           </div>
-                          <div className="bg-white border-2 border-slate-100 rounded-xl p-4 text-center shadow-sm flex flex-col justify-center">
+                          <div className="bg-white border-2 border-slate-100 rounded-xl p-3 sm:p-4 text-center shadow-sm flex flex-col justify-center">
                             <div className="text-xs sm:text-sm text-slate-500 font-bold mb-1">年 (概算)</div>
-                            <div className="text-2xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 365)}</div>
+                            <div className="text-xl sm:text-3xl font-black text-slate-700">{Math.floor(daysDifference / 365)}</div>
                           </div>
                         </div>
 
-                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base mt-2">
+                        <div className="bg-blue-50/30 border border-blue-100 rounded-xl p-4 sm:p-5 shadow-sm text-sm sm:text-base mt-1">
                            <h4 className="font-bold text-blue-800 mb-3 flex items-center">
                              <span className="w-1 h-4 bg-blue-500 rounded-full mr-2"></span>時間単位の換算 (参考)
                            </h4>
@@ -578,8 +726,39 @@
                   </div>
                 </Card>
               </div>
-
             </div>
+
+            {/* 便利な年表作成機能セクション */}
+            <div className="mt-10 mb-8 border-t-2 border-slate-200 pt-8">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-800 mb-4 flex items-center">
+                <GiftIcon className="w-6 h-6 mr-2 text-blue-500" />
+                便利な自動年表作成ツール
+              </h3>
+              <p className="text-slate-500 font-medium mb-6">基準日を生年月日とみなして、一覧表を自動生成します。</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <button onClick={() => setShowResumeModal(true)} className="bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-300 rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md text-left group">
+                  <div className="pr-4">
+                    <div className="font-bold text-slate-800 text-lg sm:text-xl mb-2 group-hover:text-blue-600 transition-colors">履歴書用 入学・卒業年表</div>
+                    <div className="text-sm text-slate-500 font-medium leading-relaxed">早生まれ（1/1〜4/1）も自動判定。小学校入学から大学卒業までの西暦・和暦を一覧表示します。</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-full text-blue-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <FileTextIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+                  </div>
+                </button>
+                
+                <button onClick={() => setShowOiwaiModal(true)} className="bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-red-300 rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md text-left group">
+                  <div className="pr-4">
+                    <div className="font-bold text-slate-800 text-lg sm:text-xl mb-2 group-hover:text-red-600 transition-colors">長寿のお祝い年表</div>
+                    <div className="text-sm text-slate-500 font-medium leading-relaxed">還暦（60歳）から百寿（100歳）までの節目となる年を、由来の解説付きで一覧表示します。</div>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-full text-red-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <GiftIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+                  </div>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       );
