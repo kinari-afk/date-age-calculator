@@ -55,6 +55,7 @@
     const GiftIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>;
     const XIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>;
     const SettingsIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
+    const LeafIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>;
 
     // 干支を取得する関数
     const getEto = (year) => {
@@ -250,6 +251,7 @@
       
       const [showResumeModal, setShowResumeModal] = useState(false);
       const [showOiwaiModal, setShowOiwaiModal] = useState(false);
+      const [showMemorialModal, setShowMemorialModal] = useState(false);
 
       useEffect(() => {
         const d = new Date(targetDateInput);
@@ -376,6 +378,47 @@
           createEntry(90, '卒寿 (そつじゅ)', '満90歳。「卒」の略字が九十と読めることから。'),
           createEntry(99, '白寿 (はくじゅ)', '満99歳。「百」の字から一を取ると白になることから。'),
           createEntry(100, '百寿 (ひゃくじゅ)', '満100歳のお祝い。紀寿（きじゅ）とも呼ばれます。')
+        ];
+      };
+
+      const generateMemorialTimeline = () => {
+        if (!isValidBaseDate) return [];
+        
+        const createDayEntry = (daysAdd, label, description) => {
+          const d = new Date(baseDate);
+          d.setDate(d.getDate() + (daysAdd - 1));
+          return {
+            date: getSeireki(d, true, true),
+            wareki: getWareki(d, true),
+            label,
+            description,
+          };
+        };
+
+        const createYearEntry = (yearAdd, label, description) => {
+          const d = new Date(baseDate);
+          d.setFullYear(d.getFullYear() + yearAdd);
+          return {
+            date: getSeireki(d, true, true),
+            wareki: getWareki(d, true),
+            label,
+            description,
+          };
+        };
+
+        return [
+          createDayEntry(7, '初七日 (しょなのか)', '命日を含めて7日目。'),
+          createDayEntry(49, '四十九日 (しじゅうくにち)', '命日を含めて49日目。忌明け（きあけ）となります。'),
+          createDayEntry(100, '百か日 (ひゃっかにち)', '命日を含めて100日目。卒哭忌（そっこくき）。'),
+          createYearEntry(1, '一周忌 (いっしゅうき)', '満1年。これ以降は回忌から1を引いた年数が満年となります。'),
+          createYearEntry(2, '三回忌 (さんかいき)', '満2年。'),
+          createYearEntry(6, '七回忌 (ななかいき)', '満6年。'),
+          createYearEntry(12, '十三回忌 (じゅうさんかいき)', '満12年。'),
+          createYearEntry(16, '十七回忌 (じゅうななかいき)', '満16年。'),
+          createYearEntry(22, '二十三回忌 (にじゅうさんかいき)', '満22年。'),
+          createYearEntry(26, '二十七回忌 (にじゅうななかいき)', '満26年。'),
+          createYearEntry(32, '三十三回忌 (さんじゅうさんかいき)', '満32年。弔い上げ（とむらいあげ）とすることが多いです。'),
+          createYearEntry(49, '五十回忌 (ごじゅっかいき)', '満49年。'),
         ];
       };
 
@@ -627,20 +670,26 @@
                     自動年表作成
                   </h3>
                   <p className="text-gray-500 font-medium max-w-lg mx-auto mb-10 leading-relaxed">
-                    基準日を「生年月日」として、履歴書やお祝い事のリストをワンタップで自動生成します。
+                    基準日を元にして、履歴書、お祝い事、法要などの一覧表をワンタップで自動生成します。
                   </p>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
                     <button onClick={() => setShowResumeModal(true)} className="bg-[#F5F5F7] hover:bg-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center transition-colors group">
                       <FileTextIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-900 mb-3 transition-colors" />
                       <div className="font-bold text-gray-900 text-lg mb-1">入学・卒業年表</div>
-                      <div className="text-xs text-gray-500 font-medium">早生まれ対応</div>
+                      <div className="text-xs text-gray-500 font-medium">生年月日を入力</div>
                     </button>
                     
                     <button onClick={() => setShowOiwaiModal(true)} className="bg-[#F5F5F7] hover:bg-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center transition-colors group">
                       <GiftIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-900 mb-3 transition-colors" />
-                      <div className="font-bold text-gray-900 text-lg mb-1">長寿のお祝い年表</div>
-                      <div className="text-xs text-gray-500 font-medium">還暦から百寿まで</div>
+                      <div className="font-bold text-gray-900 text-lg mb-1">長寿のお祝い表</div>
+                      <div className="text-xs text-gray-500 font-medium">生年月日を入力</div>
+                    </button>
+                    
+                    <button onClick={() => setShowMemorialModal(true)} className="bg-[#F5F5F7] hover:bg-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center transition-colors group">
+                      <LeafIcon className="w-8 h-8 text-gray-400 group-hover:text-gray-900 mb-3 transition-colors" />
+                      <div className="font-bold text-gray-900 text-lg mb-1">法要・年忌表</div>
+                      <div className="text-xs text-gray-500 font-medium">命日を入力</div>
                     </button>
                   </div>
                 </div>
@@ -721,6 +770,45 @@
                             <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md">{item.year}年 ({item.wareki})</span>
                           </div>
                           <p className="text-sm text-gray-500 font-medium">{item.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* 法要・年忌モーダルUI */}
+          {showMemorialModal && (
+            <div className="fixed inset-0 bg-gray-900/40 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm transition-opacity animate-in fade-in" onClick={() => setShowMemorialModal(false)}>
+              <div className="bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                    <LeafIcon className="w-6 h-6 mr-3 text-gray-400" />
+                    法要・年忌表 (忌日・回忌計算)
+                  </h3>
+                  <button onClick={() => setShowMemorialModal(false)} className="p-2 bg-[#F5F5F7] text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors">
+                    <XIcon className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-6 overflow-y-auto hide-scrollbar">
+                  <div className="bg-[#F5F5F7] rounded-2xl p-4 mb-6 text-sm text-gray-600">
+                    基準日（<span className="font-bold text-gray-900">{isValidBaseDate ? getSeireki(baseDate) : '無効な日付'}</span>）を<span className="font-bold text-gray-900">命日</span>として計算しています。<br/>
+                    <span className="text-xs text-gray-400 mt-1 block">※一般的な数え方（初七日などは命日を1日目とする、三回忌以降は満年数-1）に基づいています。宗派や地域によって異なる場合があります。</span>
+                  </div>
+                  <div className="space-y-3">
+                    {generateMemorialTimeline().map((item, i) => (
+                      <div key={i} className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-gray-300 transition-all">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-lg font-bold text-gray-900">{item.label}</span>
+                          </div>
+                          <p className="text-sm text-gray-500 font-medium">{item.description}</p>
+                        </div>
+                        <div className="flex flex-col items-start sm:items-end text-left sm:text-right bg-[#F5F5F7] px-4 py-3 rounded-xl min-w-[160px]">
+                           <span className="text-base font-bold text-gray-900">{item.date}</span>
+                           <span className="text-xs font-bold text-gray-500 mt-1">{item.wareki}</span>
                         </div>
                       </div>
                     ))}
