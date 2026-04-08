@@ -123,9 +123,17 @@
         onChange({ target: { value: val + 1 } });
       };
 
-      const containerClass = "inline-flex items-center mx-1 bg-[#F5F5F7] rounded-xl overflow-hidden border border-transparent focus-within:border-gray-300 transition-colors";
-      const btnClass = "px-3 py-1.5 text-gray-400 hover:text-gray-800 hover:bg-gray-200 transition-colors font-bold text-lg select-none active:bg-gray-300 flex items-center justify-center";
-      const inputClassName = `${width} p-1 text-center outline-none font-semibold text-lg sm:text-xl text-gray-900 bg-transparent rounded-none`;
+      const containerClass = isSmall 
+        ? "inline-flex items-center flex-shrink-0 mx-0 sm:mx-1 bg-[#F5F5F7] rounded-lg sm:rounded-xl overflow-hidden border border-transparent focus-within:border-gray-300 transition-colors"
+        : "inline-flex items-center flex-shrink-0 mx-1 bg-[#F5F5F7] rounded-xl overflow-hidden border border-transparent focus-within:border-gray-300 transition-colors";
+        
+      const btnClass = isSmall
+        ? "px-1.5 sm:px-2 py-1 text-gray-400 hover:text-gray-800 hover:bg-gray-200 transition-colors font-bold text-base sm:text-lg select-none active:bg-gray-300 flex items-center justify-center"
+        : "px-3 py-1.5 text-gray-400 hover:text-gray-800 hover:bg-gray-200 transition-colors font-bold text-lg select-none active:bg-gray-300 flex items-center justify-center";
+        
+      const inputClassName = isSmall
+        ? `${width} p-0.5 text-center outline-none font-semibold text-base sm:text-xl text-gray-900 bg-transparent rounded-none`
+        : `${width} p-1 text-center outline-none font-semibold text-lg sm:text-xl text-gray-900 bg-transparent rounded-none`;
 
       return (
         <div className={containerClass}>
@@ -419,7 +427,7 @@
               </div>
               
               {/* 右側：設定変更UI */}
-              <div className="flex-1 relative z-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-12">
+              <div className="flex-1 relative z-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-12 w-full overflow-hidden">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="text-sm font-bold text-gray-500">日付を変更する</div>
                   <button onClick={resetToToday} className="flex items-center text-gray-500 hover:text-gray-900 font-bold bg-[#F5F5F7] hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors text-xs sm:text-sm">
@@ -437,20 +445,20 @@
                   </button>
                 </div>
 
-                <div className="flex items-center min-h-[3rem]">
+                <div className="flex items-center min-h-[3rem] w-full">
                   {baseDateInputType === 'seireki' ? (
                     <input type="date" value={baseDateStr} onChange={(e) => setBaseDateStr(e.target.value)} className="text-2xl font-bold text-gray-900 bg-[#F5F5F7] px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 w-full sm:w-auto cursor-pointer transition-colors" />
                   ) : (
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
-                      <select value={warekiInput.era} onChange={(e) => handleWarekiInput('era', e.target.value)} className="bg-[#F5F5F7] px-3 py-2.5 rounded-xl outline-none font-bold text-gray-900 cursor-pointer transition-colors hover:bg-gray-200 appearance-none text-lg">
+                    <div className="flex flex-nowrap items-center gap-1 sm:gap-2 w-full overflow-x-auto hide-scrollbar pb-1">
+                      <select value={warekiInput.era} onChange={(e) => handleWarekiInput('era', e.target.value)} className="bg-[#F5F5F7] px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl outline-none font-bold text-gray-900 cursor-pointer transition-colors hover:bg-gray-200 appearance-none text-sm sm:text-lg flex-shrink-0">
                         <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option><option value="大正">大正</option><option value="明治">明治</option>
                       </select>
-                      <NumberInputWithButtons isSmall={true} width="w-12" min={1} value={warekiInput.year} onChange={(e) => handleWarekiInput('year', e.target.value)} />
-                      <span className="font-bold text-gray-500">年</span>
-                      <NumberInputWithButtons isSmall={true} width="w-10" min={1} max={12} value={warekiInput.month} onChange={(e) => handleWarekiInput('month', e.target.value)} />
-                      <span className="font-bold text-gray-500">月</span>
-                      <NumberInputWithButtons isSmall={true} width="w-10" min={1} max={31} value={warekiInput.day} onChange={(e) => handleWarekiInput('day', e.target.value)} />
-                      <span className="font-bold text-gray-500">日</span>
+                      <NumberInputWithButtons isSmall={true} width="w-8 sm:w-12" min={1} value={warekiInput.year} onChange={(e) => handleWarekiInput('year', e.target.value)} />
+                      <span className="font-bold text-gray-500 text-sm sm:text-base whitespace-nowrap flex-shrink-0">年</span>
+                      <NumberInputWithButtons isSmall={true} width="w-7 sm:w-10" min={1} max={12} value={warekiInput.month} onChange={(e) => handleWarekiInput('month', e.target.value)} />
+                      <span className="font-bold text-gray-500 text-sm sm:text-base whitespace-nowrap flex-shrink-0">月</span>
+                      <NumberInputWithButtons isSmall={true} width="w-7 sm:w-10" min={1} max={31} value={warekiInput.day} onChange={(e) => handleWarekiInput('day', e.target.value)} />
+                      <span className="font-bold text-gray-500 text-sm sm:text-base whitespace-nowrap flex-shrink-0">日</span>
                     </div>
                   )}
                 </div>
@@ -530,7 +538,7 @@
                 <Card title="期間の詳細計算" icon={<CalendarDays className="w-5 h-5"/>}>
                   <div className="flex flex-col lg:flex-row gap-8">
                     {/* 左側：入力 */}
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col w-full overflow-hidden">
                       <div className="text-base font-bold text-gray-700 mb-3 flex items-center gap-3">
                         <div>終了日（ターゲット）</div>
                         <button onClick={resetTargetDateToToday} className="flex items-center text-gray-500 hover:text-gray-900 bg-[#F5F5F7] px-3 py-1 rounded-full text-xs transition-colors">
@@ -538,25 +546,25 @@
                         </button>
                       </div>
                       
-                      <div className="flex bg-[#E5E5EA] rounded-lg p-1 mb-4 w-fit">
-                        <button onClick={() => setTargetDateInputType('seireki')} className={`px-3 py-1 text-sm font-bold rounded-md transition-all ${targetDateInputType === 'seireki' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>西暦</button>
-                        <button onClick={() => setTargetDateInputType('wareki')} className={`px-3 py-1 text-sm font-bold rounded-md transition-all ${targetDateInputType === 'wareki' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>和暦</button>
+                      <div className="flex bg-[#E5E5EA] rounded-xl p-1 mb-4 w-fit">
+                        <button onClick={() => setTargetDateInputType('seireki')} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${targetDateInputType === 'seireki' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>西暦</button>
+                        <button onClick={() => setTargetDateInputType('wareki')} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${targetDateInputType === 'wareki' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>和暦</button>
                       </div>
 
-                      <div className="mb-6 min-h-[3rem]">
+                      <div className="mb-6 min-h-[3rem] w-full">
                         {targetDateInputType === 'seireki' ? (
                           <input type="date" value={targetDateInput} onChange={(e) => setTargetDateInput(e.target.value)} className="text-2xl font-bold text-gray-900 bg-[#F5F5F7] px-4 py-2 rounded-xl focus:outline-none w-full sm:w-auto cursor-pointer" />
                         ) : (
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
-                            <select value={targetWarekiInput.era} onChange={(e) => handleTargetWarekiInput('era', e.target.value)} className="bg-[#F5F5F7] px-3 py-2 rounded-xl outline-none font-bold text-gray-900 cursor-pointer text-lg appearance-none">
+                          <div className="flex flex-nowrap items-center gap-1 sm:gap-2 w-full overflow-x-auto hide-scrollbar pb-1">
+                            <select value={targetWarekiInput.era} onChange={(e) => handleTargetWarekiInput('era', e.target.value)} className="bg-[#F5F5F7] px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl outline-none font-bold text-gray-900 cursor-pointer transition-colors hover:bg-gray-200 appearance-none text-sm sm:text-lg flex-shrink-0">
                               <option value="令和">令和</option><option value="平成">平成</option><option value="昭和">昭和</option><option value="大正">大正</option><option value="明治">明治</option>
                             </select>
-                            <NumberInputWithButtons isSmall={true} width="w-12" min={1} value={targetWarekiInput.year} onChange={(e) => handleTargetWarekiInput('year', e.target.value)} />
-                            <span className="font-bold text-gray-500">年</span>
-                            <NumberInputWithButtons isSmall={true} width="w-10" min={1} max={12} value={targetWarekiInput.month} onChange={(e) => handleTargetWarekiInput('month', e.target.value)} />
-                            <span className="font-bold text-gray-500">月</span>
-                            <NumberInputWithButtons isSmall={true} width="w-10" min={1} max={31} value={targetWarekiInput.day} onChange={(e) => handleTargetWarekiInput('day', e.target.value)} />
-                            <span className="font-bold text-gray-500">日</span>
+                            <NumberInputWithButtons isSmall={true} width="w-8 sm:w-12" min={1} value={targetWarekiInput.year} onChange={(e) => handleTargetWarekiInput('year', e.target.value)} />
+                            <span className="font-bold text-gray-500 text-sm sm:text-base whitespace-nowrap flex-shrink-0">年</span>
+                            <NumberInputWithButtons isSmall={true} width="w-7 sm:w-10" min={1} max={12} value={targetWarekiInput.month} onChange={(e) => handleTargetWarekiInput('month', e.target.value)} />
+                            <span className="font-bold text-gray-500 text-sm sm:text-base whitespace-nowrap flex-shrink-0">月</span>
+                            <NumberInputWithButtons isSmall={true} width="w-7 sm:w-10" min={1} max={31} value={targetWarekiInput.day} onChange={(e) => handleTargetWarekiInput('day', e.target.value)} />
+                            <span className="font-bold text-gray-500 text-sm sm:text-base whitespace-nowrap flex-shrink-0">日</span>
                           </div>
                         )}
                       </div>
