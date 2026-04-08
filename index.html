@@ -150,8 +150,14 @@
       const [diffYearsType, setDiffYearsType] = useState('after');
       const [targetAge, setTargetAge] = useState(50);
       const [targetYear, setTargetYear] = useState(() => new Date().getFullYear() + 10);
-      const [diffDays, setDiffDays] = useState(100);
-      const [diffDaysType, setDiffDaysType] = useState('after');
+      
+      // 新しい状態: 期間計算用のターゲット日（デフォルトは100日後に設定）
+      const [targetDateInput, setTargetDateInput] = useState(() => {
+        const today = new Date();
+        const jstOffset = 9 * 60 * 60 * 1000;
+        const jstDate = new Date(today.getTime() + (today.getTimezoneOffset() * 60000) + jstOffset + (100 * 24 * 60 * 60 * 1000));
+        return jstDate.toISOString().split('T')[0];
+      });
 
       // --- 計算ロジック ---
       const baseDate = new Date(baseDateStr);
@@ -189,6 +195,7 @@
         setter(isNaN(num) ? '' : num);
       };
 
+      // 1. 年の増減計算
       let diffYearsResultDate = null;
       if (isValidBaseDate && diffYears !== '') {
         diffYearsResultDate = new Date(baseDate);
@@ -196,12 +203,14 @@
         diffYearsResultDate.setFullYear(diffYearsResultDate.getFullYear() + (diffYears * sign));
       }
 
+      // 2. 年齢からの年計算
       let targetAgeResultDate = null;
       if (isValidBaseDate && targetAge !== '') {
         targetAgeResultDate = new Date(baseDate);
         targetAgeResultDate.setFullYear(targetAgeResultDate.getFullYear() + targetAge);
       }
 
+      // 3. 指定した年の逆引き
       let targetYearDiff = null;
       let targetYearDate = null;
       if (isValidBaseDate && targetYear !== '') {
@@ -210,11 +219,23 @@
         targetYearDate.setFullYear(targetYear);
       }
 
-      let diffDaysResultDate = null;
-      if (isValidBaseDate && diffDays !== '') {
-        diffDaysResultDate = new Date(baseDate);
-        const sign = diffDaysType === 'after' ? 1 : -1;
-        diffDaysResultDate.setDate(diffDaysResultDate.getDate() + (diffDays * sign));
+      // 4. 指定した日付までの日数計算
+      let targetDateBetween = null;
+      let daysDifference = null;
+      let daysDirection = '';
+      if (isValidBaseDate && targetDateInput !== '') {
+        targetDateBetween = new Date(targetDateInput);
+        if (!isNaN(targetDateBetween.getTime())) {
+          // 時間のズレを無視して純粋な日付の差を計算するため、UTCで午前0時に揃える
+          const baseUTC = Date.UTC(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+          const targetUTC = Date.UTC(targetDateBetween.getFullYear(), targetDateBetween.getMonth(), targetDateBetween.getDate());
+          const diffTime = targetUTC - baseUTC;
+          
+          daysDifference = Math.abs(diffTime) / (1000 * 60 * 60 * 24);
+          if (diffTime > 0) daysDirection = '後';
+          else if (diffTime < 0) daysDirection = '前';
+          else daysDirection = '当日';
+        }
       }
 
       // --- UIコンポーネント ---
@@ -379,17 +400,17 @@
                 />
               </Card>
 
-              <Card title="〇日前・〇日後は何月何日？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+              <Card title="指定した日付までは何日間？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
                 <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  基準日から
-                  <NumberInputWithButtons width="w-20 sm:w-24" value={diffDays} onChange={handleNumberChange(setDiffDays)} placeholder="0" />
-                  <select className={selectClass} value={diffDaysType} onChange={e => setDiffDaysType(e.target.value)}>
-                    <option value="before">日前</option>
-                    <option value="after">日後</option>
-                  </select>
-                  は
+                  基準日と
+                  <input type="date" value={targetDateInput} onChange={(e) => setTargetDateInput(e.target.value)} className="text-lg sm:text-2xl font-black text-blue-600 border-b-2 border-slate-300 focus:border-blue-500 focus:ring-0 outline-none pb-1 mx-2 bg-transparent cursor-pointer transition-colors rounded-none" />
+                  の間は
                 </div>
-                <ResultBox main={diffDaysResultDate ? getSeireki(diffDaysResultDate, true) : null} sub1={diffDaysResultDate ? getWareki(diffDaysResultDate, true) : null} />
+                <ResultBox 
+                  main={daysDifference !== null ? (daysDirection === '当日' ? '0日間 (同日)' : `${daysDifference} 日間`) : null} 
+                  sub1={daysDifference !== null && daysDirection !== '当日' ? `(基準日の ${daysDifference}日${daysDirection})` : null}
+                  sub2={targetDateBetween && !isNaN(targetDateBetween.getTime()) ? `${getWareki(targetDateBetween, true)}` : null}
+                />
               </Card>
             </div>
           </div>
