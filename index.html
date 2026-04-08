@@ -23,6 +23,14 @@
     input[type="number"] {
       -moz-appearance: textfield;
     }
+    /* スクロールバーを隠すユーティリティクラス */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 <body class="bg-slate-100">
@@ -148,9 +156,9 @@
     // セレクトボックスの共通スタイル
     const selectClass = "mx-1 sm:mx-2 p-1 bg-transparent border-b-2 border-slate-300 focus:border-blue-500 outline-none font-bold text-xl sm:text-2xl text-blue-600 cursor-pointer transition-colors";
 
-    // カードの共通デザイン（Appコンポーネントの外に配置することで再マウントを防ぎます）
+    // カードの共通デザイン
     const Card = ({ title, icon, children }) => (
-      <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-slate-100 flex flex-col h-full">
+      <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-slate-100 flex flex-col h-full animate-in fade-in zoom-in-95 duration-300">
         <div className="bg-slate-50/80 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex items-center">
           <div className="p-2 bg-white rounded-lg shadow-sm text-blue-500 mr-3">
             {icon}
@@ -200,6 +208,8 @@
 
     function App() {
       // --- 状態管理 ---
+      const [activeTab, setActiveTab] = useState('calc'); // 'calc' | 'duration' | 'timeline'
+
       const getTodayString = () => {
         const today = new Date();
         const jstOffset = 9 * 60 * 60 * 1000;
@@ -459,6 +469,8 @@
       return (
         <div className="min-h-screen bg-slate-100 p-3 sm:p-6 md:p-8 font-sans text-slate-800 relative">
           <div className="max-w-5xl mx-auto">
+            
+            {/* ヘッダーエリア */}
             <header className="mb-6 sm:mb-8 pl-2 border-l-4 border-blue-500">
               <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2">
                 <div>
@@ -474,7 +486,8 @@
               </div>
             </header>
 
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-8 mb-6 sm:mb-8 border border-slate-100">
+            {/* 基準日設定（常に表示） */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-8 mb-6 border border-slate-100">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 sm:gap-8">
                 <div className="flex-1 w-full">
                   <div className="flex items-center justify-between mb-3">
@@ -551,56 +564,85 @@
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8">
-              <Card title="〇年前・〇年後は何年？" icon={<ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  基準日から
-                  <NumberInputWithButtons value={diffYears} onChange={handleNumberChange(setDiffYears)} placeholder="0" />
-                  <select className={selectClass} value={diffYearsType} onChange={e => setDiffYearsType(e.target.value)}>
-                    <option value="before">年前</option>
-                    <option value="after">年後</option>
-                  </select>
-                  は
-                </div>
-                <ResultBox main={diffYearsResultDate ? getSeireki(diffYearsResultDate) : null} sub1={diffYearsResultDate ? getWareki(diffYearsResultDate) : null} sub2={diffYearsResultDate ? `干支: ${getEto(diffYearsResultDate.getFullYear())}年` : null} />
-              </Card>
+            {/* --- タブナビゲーション --- */}
+            <div className="flex bg-white rounded-xl shadow-sm p-1.5 mb-6 overflow-x-auto border border-slate-200 hide-scrollbar">
+              <button 
+                onClick={() => setActiveTab('calc')} 
+                className={`flex-1 min-w-[140px] py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-bold transition-all whitespace-nowrap flex justify-center items-center ${activeTab === 'calc' ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              >
+                📅 日付・年齢計算
+              </button>
+              <button 
+                onClick={() => setActiveTab('duration')} 
+                className={`flex-1 min-w-[140px] py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-bold transition-all whitespace-nowrap flex justify-center items-center ${activeTab === 'duration' ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              >
+                ⏳ 期間の詳細計算
+              </button>
+              <button 
+                onClick={() => setActiveTab('timeline')} 
+                className={`flex-1 min-w-[140px] py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-bold transition-all whitespace-nowrap flex justify-center items-center ${activeTab === 'timeline' ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              >
+                📜 自動年表作成
+              </button>
+            </div>
 
-              <Card title="〇歳になるのは何年？" icon={<User className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  基準日を生年月日として、
-                  <NumberInputWithButtons value={targetAge} onChange={handleNumberChange(setTargetAge)} placeholder="0" />
-                  歳になる年は
-                </div>
-                <ResultBox main={targetAgeResultDate ? getSeireki(targetAgeResultDate) : null} sub1={targetAgeResultDate ? getWareki(targetAgeResultDate) : null} />
-              </Card>
+            {/* --- タブの中身 --- */}
+            
+            {/* タブ1: 基本計算 */}
+            {activeTab === 'calc' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 animate-in fade-in zoom-in-95 duration-300">
+                <Card title="〇年前・〇年後は何年？" icon={<ArrowRightLeft className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                  <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                    基準日から
+                    <NumberInputWithButtons value={diffYears} onChange={handleNumberChange(setDiffYears)} placeholder="0" />
+                    <select className={selectClass} value={diffYearsType} onChange={e => setDiffYearsType(e.target.value)}>
+                      <option value="before">年前</option>
+                      <option value="after">年後</option>
+                    </select>
+                    は
+                  </div>
+                  <ResultBox main={diffYearsResultDate ? getSeireki(diffYearsResultDate) : null} sub1={diffYearsResultDate ? getWareki(diffYearsResultDate) : null} sub2={diffYearsResultDate ? `干支: ${getEto(diffYearsResultDate.getFullYear())}年` : null} />
+                </Card>
 
-              <Card title="指定した年の情報を知る" icon={<HistoryIcon className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  <NumberInputWithButtons width="w-20 sm:w-24" value={targetYear} onChange={handleNumberChange(setTargetYear)} placeholder="2030" />
-                  年は、基準日から見て
-                </div>
-                <ResultBox 
-                  main={targetYear !== '' && targetYearDiff !== null ? (targetYearDiff > 0 ? `${targetYearDiff}年後` : targetYearDiff < 0 ? `${Math.abs(targetYearDiff)}年前` : '同年') : null}
-                  sub1={targetYear !== '' && targetYearDate ? getWareki(targetYearDate) : null}
-                  sub2={targetYear !== '' && targetYearDiff !== null ? `干支: ${getEto(targetYear)}年 / 基準日から: ${targetYearDiff >= 0 ? targetYearDiff + '歳' : '生まれる前'}` : null}
-                />
-              </Card>
+                <Card title="〇歳になるのは何年？" icon={<User className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                  <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                    基準日を生年月日として、
+                    <NumberInputWithButtons value={targetAge} onChange={handleNumberChange(setTargetAge)} placeholder="0" />
+                    歳になる年は
+                  </div>
+                  <ResultBox main={targetAgeResultDate ? getSeireki(targetAgeResultDate) : null} sub1={targetAgeResultDate ? getWareki(targetAgeResultDate) : null} />
+                </Card>
 
-              <Card title="〇日前・〇日後はいつ？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
-                <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
-                  基準日から
-                  <NumberInputWithButtons width="w-20 sm:w-24" value={diffDaysTool} onChange={handleNumberChange(setDiffDaysTool)} placeholder="0" />
-                  <select className={selectClass} value={diffDaysToolType} onChange={e => setDiffDaysToolType(e.target.value)}>
-                    <option value="before">日前</option>
-                    <option value="after">日後</option>
-                  </select>
-                  は
-                </div>
-                <ResultBox main={diffDaysToolResultDate ? getSeireki(diffDaysToolResultDate, true, true) : null} sub1={diffDaysToolResultDate ? getWareki(diffDaysToolResultDate, true) : null} />
-              </Card>
+                <Card title="指定した年の情報を知る" icon={<HistoryIcon className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                  <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                    <NumberInputWithButtons width="w-20 sm:w-24" value={targetYear} onChange={handleNumberChange(setTargetYear)} placeholder="2030" />
+                    年は、基準日から見て
+                  </div>
+                  <ResultBox 
+                    main={targetYear !== '' && targetYearDiff !== null ? (targetYearDiff > 0 ? `${targetYearDiff}年後` : targetYearDiff < 0 ? `${Math.abs(targetYearDiff)}年前` : '同年') : null}
+                    sub1={targetYear !== '' && targetYearDate ? getWareki(targetYearDate) : null}
+                    sub2={targetYear !== '' && targetYearDiff !== null ? `干支: ${getEto(targetYear)}年 / 基準日から: ${targetYearDiff >= 0 ? targetYearDiff + '歳' : '生まれる前'}` : null}
+                  />
+                </Card>
 
-              {/* 期間の詳細計算カード (全幅を使うため col-span-2) */}
-              <div className="lg:col-span-2">
+                <Card title="〇日前・〇日後はいつ？" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
+                  <div className="text-base sm:text-xl flex items-center flex-wrap gap-y-3 mb-4 text-slate-700 font-medium leading-loose sm:leading-relaxed">
+                    基準日から
+                    <NumberInputWithButtons width="w-20 sm:w-24" value={diffDaysTool} onChange={handleNumberChange(setDiffDaysTool)} placeholder="0" />
+                    <select className={selectClass} value={diffDaysToolType} onChange={e => setDiffDaysToolType(e.target.value)}>
+                      <option value="before">日前</option>
+                      <option value="after">日後</option>
+                    </select>
+                    は
+                  </div>
+                  <ResultBox main={diffDaysToolResultDate ? getSeireki(diffDaysToolResultDate, true, true) : null} sub1={diffDaysToolResultDate ? getWareki(diffDaysToolResultDate, true) : null} />
+                </Card>
+              </div>
+            )}
+
+            {/* タブ2: 期間の詳細計算 */}
+            {activeTab === 'duration' && (
+              <div className="mb-8 animate-in fade-in zoom-in-95 duration-300">
                 <Card title="期間の詳細計算（日数など）" icon={<CalendarDays className="w-5 h-5 sm:w-6 sm:h-6"/>}>
                   <div className="flex flex-col md:flex-row gap-6 sm:gap-8">
                     {/* 左側：入力と結果サマリー */}
@@ -736,38 +778,48 @@
                   </div>
                 </Card>
               </div>
-            </div>
+            )}
 
-            {/* 便利な年表作成機能セクション */}
-            <div className="mt-10 mb-8 border-t-2 border-slate-200 pt-8">
-              <h3 className="text-xl sm:text-2xl font-black text-slate-800 mb-4 flex items-center">
-                <GiftIcon className="w-6 h-6 mr-2 text-blue-500" />
-                便利な自動年表作成ツール
-              </h3>
-              <p className="text-slate-500 font-medium mb-6">基準日を生年月日とみなして、一覧表を自動生成します。</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <button onClick={() => setShowResumeModal(true)} className="bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-300 rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md text-left group">
-                  <div className="pr-4">
-                    <div className="font-bold text-slate-800 text-lg sm:text-xl mb-2 group-hover:text-blue-600 transition-colors">履歴書用 入学・卒業年表</div>
-                    <div className="text-sm text-slate-500 font-medium leading-relaxed">早生まれ（1/1〜4/1）も自動判定。小学校入学から大学卒業までの西暦・和暦を一覧表示します。</div>
+            {/* タブ3: 自動年表作成 */}
+            {activeTab === 'timeline' && (
+              <div className="mb-8 animate-in fade-in zoom-in-95 duration-300">
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-10">
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center p-4 bg-blue-50 rounded-full mb-4">
+                      <GiftIcon className="w-8 h-8 text-blue-500" />
+                    </div>
+                    <h3 className="text-2xl sm:text-3xl font-black text-slate-800 mb-3">
+                      便利な自動年表作成ツール
+                    </h3>
+                    <p className="text-slate-500 font-medium max-w-xl mx-auto">
+                      基準日を<span className="font-bold text-blue-600">「生年月日」</span>とみなして、必要な情報がまとまった一覧表をワンタップで自動生成します。
+                    </p>
                   </div>
-                  <div className="bg-blue-50 p-3 rounded-full text-blue-500 group-hover:scale-110 transition-transform flex-shrink-0">
-                    <FileTextIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <button onClick={() => setShowResumeModal(true)} className="bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-300 rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md text-left group">
+                      <div className="pr-4">
+                        <div className="font-bold text-slate-800 text-lg sm:text-xl mb-2 group-hover:text-blue-600 transition-colors">履歴書用 入学・卒業年表</div>
+                        <div className="text-sm text-slate-500 font-medium leading-relaxed">早生まれ（1/1〜4/1）も自動判定。小学校入学から大学卒業までの西暦・和暦を一覧表示します。</div>
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded-full text-blue-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                        <FileTextIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+                      </div>
+                    </button>
+                    
+                    <button onClick={() => setShowOiwaiModal(true)} className="bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-red-300 rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md text-left group">
+                      <div className="pr-4">
+                        <div className="font-bold text-slate-800 text-lg sm:text-xl mb-2 group-hover:text-red-600 transition-colors">長寿のお祝い年表</div>
+                        <div className="text-sm text-slate-500 font-medium leading-relaxed">還暦（60歳）から百寿（100歳）までの節目となる年を、由来の解説付きで一覧表示します。</div>
+                      </div>
+                      <div className="bg-red-50 p-3 rounded-full text-red-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                        <GiftIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+                      </div>
+                    </button>
                   </div>
-                </button>
-                
-                <button onClick={() => setShowOiwaiModal(true)} className="bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-red-300 rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all duration-200 shadow-sm hover:shadow-md text-left group">
-                  <div className="pr-4">
-                    <div className="font-bold text-slate-800 text-lg sm:text-xl mb-2 group-hover:text-red-600 transition-colors">長寿のお祝い年表</div>
-                    <div className="text-sm text-slate-500 font-medium leading-relaxed">還暦（60歳）から百寿（100歳）までの節目となる年を、由来の解説付きで一覧表示します。</div>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded-full text-red-500 group-hover:scale-110 transition-transform flex-shrink-0">
-                    <GiftIcon className="w-6 h-6 sm:w-8 sm:h-8" />
-                  </div>
-                </button>
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
 
