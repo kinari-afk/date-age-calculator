@@ -293,11 +293,18 @@
         <div className="min-h-screen bg-slate-100 p-3 sm:p-6 md:p-8 font-sans text-slate-800">
           <div className="max-w-5xl mx-auto">
             <header className="mb-6 sm:mb-8 pl-2 border-l-4 border-blue-500">
-              <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-800 tracking-tight flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
-                <span className="text-blue-600">ChronoCalc</span>
-                <span className="text-lg sm:text-2xl font-bold text-slate-500 tracking-normal">暦と年齢の計算ダッシュボード</span>
-              </h1>
-              <p className="text-sm sm:text-base text-slate-500 mt-2 font-medium">基準日を設定すると、すべての計算が連動して更新されます。</p>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2">
+                <div>
+                  <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-800 tracking-tight flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4">
+                    <span className="text-blue-600">ChronoCalc</span>
+                    <span className="text-lg sm:text-2xl font-bold text-slate-500 tracking-normal">暦と年齢の計算ダッシュボード</span>
+                  </h1>
+                  <p className="text-sm sm:text-base text-slate-500 mt-2 font-medium">基準日を設定すると、すべての計算が連動して更新されます。</p>
+                </div>
+                <div className="text-xs sm:text-sm text-slate-400 font-medium mb-1">
+                  App creator: KINARI
+                </div>
+              </div>
             </header>
 
             <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm p-4 sm:p-8 mb-6 sm:mb-8 border border-slate-100">
@@ -413,6 +420,7 @@
                 />
               </Card>
             </div>
+
           </div>
         </div>
       );
