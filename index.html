@@ -308,6 +308,25 @@
         setter(isNaN(parseInt(val, 10)) ? '' : parseInt(val, 10));
       };
 
+      // 今日の年齢と次の誕生日までの日数計算
+      let currentAge = null;
+      let nextBirthdayDays = null;
+      if (isValidBaseDate) {
+        const today = new Date(getTodayString());
+        currentAge = today.getFullYear() - baseDate.getFullYear();
+        const m = today.getMonth() - baseDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < baseDate.getDate())) {
+          currentAge--;
+        }
+        
+        const nextBirthday = new Date(today.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+        if (nextBirthday.getTime() < today.getTime()) {
+          nextBirthday.setFullYear(today.getFullYear() + 1);
+        }
+        const diffTime = nextBirthday.getTime() - today.getTime();
+        nextBirthdayDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      }
+
       let diffYearsResultDate = null;
       if (isValidBaseDate && diffYears !== '') {
         diffYearsResultDate = new Date(baseDate);
@@ -532,6 +551,17 @@
             {/* タブ1: 基本計算 */}
             {activeTab === 'calc' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-in fade-in zoom-in-95 duration-300">
+                <Card title="今日の年齢" icon={<User className="w-5 h-5"/>}>
+                  <div className="text-base font-medium text-gray-500 flex items-center flex-wrap gap-y-3 mb-2">
+                    基準日を生年月日とした場合、今日時点の年齢は
+                  </div>
+                  <ResultBox 
+                    main={currentAge !== null ? `${currentAge} 歳` : null} 
+                    sub1={isValidBaseDate ? `今日: ${getSeireki(new Date(getTodayString()), true)}` : null} 
+                    sub2={nextBirthdayDays !== null ? (nextBirthdayDays === 0 ? '🎉 今日が誕生日です！' : `次の誕生日まであと ${nextBirthdayDays} 日`) : null}
+                  />
+                </Card>
+
                 <Card title="年計算" icon={<ArrowRightLeft className="w-5 h-5"/>}>
                   <div className="text-base font-medium text-gray-500 flex items-center flex-wrap gap-y-3 mb-2">
                     基準日から
